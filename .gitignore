@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+_shot_*.png
+_cprofile/
+_article.html
+.DS_Store
+.claude/
+
+# generated output — built by .github/workflows/deploy.yml, not committed
+docs/
