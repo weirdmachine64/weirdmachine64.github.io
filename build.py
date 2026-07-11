@@ -20,7 +20,7 @@ Write posts as Markdown files in ./posts with a small front-matter header:
 """
 import os, re, sys, shutil, html, json, datetime, http.server, socketserver
 import urllib.request, urllib.error
-from config import SITE
+from config import SITE, CVES
 
 ROOT   = os.path.dirname(os.path.abspath(__file__))
 POSTS  = os.path.join(ROOT, "posts")
@@ -230,6 +230,7 @@ def nav(active, depth=0):
     up = "../" * depth
     items = [("~", up + "index.html", "home"),
              ("research", up + "research/index.html", "research"),
+             ("cves", up + "cves.html", "cves"),
              ("projects", up + "projects.html", "projects"),
              ("about", up + "about.html", "about")]
     links = ""
@@ -298,6 +299,16 @@ def post_card(p, depth):
 </a>"""
 
 
+def cve_card(cve):
+    record_url = f"https://www.cve.org/CVERecord?id={cve['id']}"
+    return f"""<article class="card cve">
+  <div class="card__date">{esc(cve['date'])}</div>
+  <h3 class="card__title">{esc(cve['id'])}</h3>
+  <p class="card__sum">{esc(cve['summary'])}</p>
+  <a class="cve__link" href="{record_url}" rel="noopener" target="_blank">Show publication <span aria-hidden="true">&rarr;</span></a>
+</article>"""
+
+
 # ---------------------------------------------------------------------------
 # Pages
 # ---------------------------------------------------------------------------
@@ -324,6 +335,7 @@ def build_index(posts):
         '<p class="muted">No posts yet. Add one in ./posts and rebuild.</p>'
     rest = "".join(post_card(p, 0) for p in posts[1:4])
     rest_block = f'<div class="cards">{rest}</div>' if rest else ""
+    cves_preview = "".join(cve_card(cve) for cve in CVES[:3])
 
     body = f"""
 <section class="hero">
@@ -341,6 +353,10 @@ def build_index(posts):
   <div class="section__head"><h2># latest writeup</h2><a class="more" href="research/index.html">all research &rarr;</a></div>
   {featured_html}
   {rest_block}
+</section>
+<section class="section">
+  <div class="section__head"><h2># CVEs</h2><a class="more" href="cves.html">all CVEs &rarr;</a></div>
+  <div class="cards">{cves_preview}</div>
 </section>
 """
     write("index.html", page(SITE["title"], SITE["description"], body, "home", 0, "is-home"))
@@ -381,6 +397,18 @@ def build_research(posts):
 
     for p in posts:
         build_post(p)
+
+
+def build_cves():
+    cards = "".join(cve_card(cve) for cve in CVES)
+    body = f"""
+<div class="page-head">
+  <h1># CVEs</h1>
+  <p class="muted">{len(CVES)} disclosed vulnerabilities and advisories.</p>
+</div>
+<div class="cards cards--list">{cards}</div>
+"""
+    write("cves.html", page("CVEs // " + SITE["handle"], "Disclosed CVEs and security advisories.", body, "cves"))
 
 
 def build_post(p):
@@ -528,6 +556,7 @@ def main():
     posts = load_posts()
     build_index(posts)
     build_research(posts)
+    build_cves()
     build_projects()
     build_about()
     build_feed(posts)

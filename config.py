@@ -15,3 +15,37 @@ SITE = {
         {"label": "rss",      "url": "/feed.xml"},
     ],
 }
+
+# Disclosed CVEs shown on the dedicated CVEs page and homepage preview.
+CVES = [
+    {
+        "id": "CVE-2025-66413",
+        "date": "Mar 11, 2026",
+        "summary": "Git for Windows is the Windows port of Git. Prior to 2.53.0(2), it is possible to obtain a user's NTLM hash by tricking them into cloning from a malicious server.",
+    },
+    {
+        "id": "CVE-2023-39137",
+        "date": "Aug 30, 2023",
+        "summary": "An issue in Archive v3.3.7 allows attackers to spoof zip filenames which can lead to inconsistent filename parsing.",
+    },
+    {
+        "id": "CVE-2023-39135",
+        "date": "Aug 30, 2023",
+        "summary": "An issue in Zip Swift v2.1.2 allows attackers to execute a path traversal attack via a crafted zip entry.",
+    },
+    {
+        "id": "CVE-2023-39138",
+        "date": "Aug 30, 2023",
+        "summary": "An issue in ZIPFoundation v0.9.16 allows attackers to execute a path traversal via extracting a crafted zip file.",
+    },
+    {
+        "id": "CVE-2023-39136",
+        "date": "Aug 30, 2023",
+        "summary": "An unhandled edge case in the component _sanitizedPath of ZipArchive v2.5.4 allows attackers to cause a Denial of Service (DoS) via a crafted zip file.",
+    },
+    {
+        "id": "CVE-2023-39139",
+        "date": "Aug 30, 2023",
+        "summary": "An issue in Archive v3.3.7 allows attackers to execute a path traversal via extracting a crafted zip file.",
+    },
+]
