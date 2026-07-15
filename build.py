@@ -107,14 +107,19 @@ def markdown(md):
             i += 1
             continue
 
-        # standalone image -> <figure> with caption from alt text
+        # standalone image/video -> <figure> with caption from alt text
         # (greedy alt so brackets like [::1] inside the caption are allowed)
         m = re.match(r"^!\[(.*)\]\(([^)]+)\)\s*$", line)
         if m:
             close_list(list_stack)
             alt, src = m.group(1), m.group(2)
             cap = f'<figcaption>{inline(alt)}</figcaption>' if alt.strip() else ""
-            out.append(f'<figure><img src="{esc(src)}" alt="{esc(alt)}" loading="lazy">{cap}</figure>')
+            if src.lower().split("?")[0].endswith((".webm", ".mp4", ".mov", ".ogg")):
+                media = (f'<video src="{esc(src)}" controls preload="metadata" '
+                         f'playsinline></video>')
+            else:
+                media = f'<img src="{esc(src)}" alt="{esc(alt)}" loading="lazy">'
+            out.append(f'<figure>{media}{cap}</figure>')
             i += 1
             continue
 
@@ -156,8 +161,15 @@ def markdown(md):
                 close_list(list_stack)
                 out.append(f"<{want}>")
                 list_stack.append(want)
-            out.append(f"<li>{inline(m.group(3))}</li>")
+            buf = [m.group(3)]
             i += 1
+            # soft-wrapped continuation lines belong to the same <li>
+            while i < n and lines[i].strip() and not re.match(
+                    r"^(#{1,6}\s|```|>|\s*([-*+]|\d+\.)\s|\||(\*{3,}|-{3,}|_{3,})\s*$)",
+                    lines[i]):
+                buf.append(lines[i].strip())
+                i += 1
+            out.append(f"<li>{inline(' '.join(buf))}</li>")
             continue
 
         # paragraph (accumulate until blank)
@@ -565,7 +577,7 @@ def main():
     if "--serve" in sys.argv:
         os.chdir(OUT)
         port = 8000
-        with socketserver.TCPServer(("", port), http.server.SimpleHTTPRequestHandler) as httpd:
+        with http.server.HTTPServer(("", port), http.server.SimpleHTTPRequestHandler) as httpd:
             print(f"[+] serving http://localhost:{port}  (ctrl-c to stop)")
             httpd.serve_forever()
 
