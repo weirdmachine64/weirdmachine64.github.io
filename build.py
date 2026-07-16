@@ -321,7 +321,7 @@ PAGE = """<!doctype html>
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{{canonical}}">
 <meta name="theme-color" content="#05070a">
-
+{{gsv}}
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="{{up}}assets/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="{{up}}assets/favicon-32.png" type="image/png" sizes="32x32">
@@ -366,11 +366,13 @@ PAGE = """<!doctype html>
 def page(title, desc, body, active, depth=0, bodyclass="", path="", ogtype="website", jsonld=""):
     canonical = SITE["url"].rstrip("/") + "/" + path
     image = SITE["url"].rstrip("/") + "/assets/og-image.png"
+    gsv_code = SITE.get("google_site_verification", "")
+    gsv = (f'<meta name="google-site-verification" content="{esc(gsv_code)}">' if gsv_code else "")
     return render(PAGE,
         title=esc(title), desc=esc(desc), up="../" * depth,
         nav=nav(active, depth), socials=socials_html(depth),
         handle=esc(SITE["handle"]), body=body, bodyclass=bodyclass,
-        canonical=canonical, image=image, ogtype=ogtype, jsonld=jsonld)
+        canonical=canonical, image=image, ogtype=ogtype, jsonld=jsonld, gsv=gsv)
 
 
 def post_card(p, depth):
