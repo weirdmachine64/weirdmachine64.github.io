@@ -252,6 +252,54 @@ def nav(active, depth=0):
     return links
 
 
+def jsonld_script(data):
+    return f'<script type="application/ld+json">{json.dumps(data, ensure_ascii=False)}</script>'
+
+
+def website_jsonld():
+    base = SITE["url"].rstrip("/")
+    same_as = [s["url"] for s in SITE["socials"] if s["url"].startswith("http")]
+    data = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Person",
+                "@id": base + "/#person",
+                "name": SITE["author"],
+                "url": base,
+                "jobTitle": SITE["role"],
+                "sameAs": same_as,
+            },
+            {
+                "@type": "WebSite",
+                "@id": base + "/#website",
+                "url": base,
+                "name": SITE["title"],
+                "description": SITE["description"],
+                "author": {"@id": base + "/#person"},
+            },
+        ],
+    }
+    return jsonld_script(data)
+
+
+def article_jsonld(p, canonical):
+    data = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": p["title"],
+        "description": p["summary"],
+        "datePublished": p["date"],
+        "dateModified": p["date"],
+        "url": canonical,
+        "mainEntityOfPage": canonical,
+        "keywords": ", ".join(p["tags"]),
+        "author": {"@type": "Person", "name": SITE["author"], "url": SITE["url"].rstrip("/")},
+        "publisher": {"@type": "Person", "name": SITE["author"]},
+    }
+    return jsonld_script(data)
+
+
 def socials_html(depth=0):
     up = "../" * depth
     out = ""
@@ -270,6 +318,28 @@ PAGE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{title}}</title>
 <meta name="description" content="{{desc}}">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="{{canonical}}">
+<meta name="theme-color" content="#05070a">
+
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="{{up}}assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{{up}}assets/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="{{up}}assets/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="{{up}}assets/apple-touch-icon.png">
+<link rel="manifest" href="{{up}}assets/site.webmanifest">
+
+<meta property="og:type" content="{{ogtype}}">
+<meta property="og:site_name" content="{{handle}}">
+<meta property="og:title" content="{{title}}">
+<meta property="og:description" content="{{desc}}">
+<meta property="og:url" content="{{canonical}}">
+<meta property="og:image" content="{{image}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{title}}">
+<meta name="twitter:description" content="{{desc}}">
+<meta name="twitter:image" content="{{image}}">
+{{jsonld}}
 <link rel="stylesheet" href="{{up}}assets/style.css">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/black-metal-bathory.min.css">
@@ -277,7 +347,7 @@ PAGE = """<!doctype html>
 <body class="{{bodyclass}}">
 <div class="scanlines" aria-hidden="true"></div>
 <header class="site">
-  <a class="brand" href="{{up}}index.html"><span class="brand__mark"></span>{{handle}}<span class="accent">.</span></a>
+  <a class="brand" href="{{up}}index.html"><span class="brand__mark">~</span>{{handle}}<span class="accent">.</span></a>
   <nav class="nav">{{nav}}</nav>
 </header>
 <main class="wrap">
@@ -293,11 +363,14 @@ PAGE = """<!doctype html>
 </html>"""
 
 
-def page(title, desc, body, active, depth=0, bodyclass=""):
+def page(title, desc, body, active, depth=0, bodyclass="", path="", ogtype="website", jsonld=""):
+    canonical = SITE["url"].rstrip("/") + "/" + path
+    image = SITE["url"].rstrip("/") + "/assets/og-image.png"
     return render(PAGE,
         title=esc(title), desc=esc(desc), up="../" * depth,
         nav=nav(active, depth), socials=socials_html(depth),
-        handle=esc(SITE["handle"]), body=body, bodyclass=bodyclass)
+        handle=esc(SITE["handle"]), body=body, bodyclass=bodyclass,
+        canonical=canonical, image=image, ogtype=ogtype, jsonld=jsonld)
 
 
 def post_card(p, depth):
@@ -371,7 +444,8 @@ def build_index(posts):
   <div class="cards">{cves_preview}</div>
 </section>
 """
-    write("index.html", page(SITE["title"], SITE["description"], body, "home", 0, "is-home"))
+    write("index.html", page(SITE["title"], SITE["description"], body, "home", 0, "is-home",
+                              path="", jsonld=website_jsonld()))
 
 
 def featured_card(p, depth):
@@ -405,7 +479,8 @@ def build_research(posts):
 <div class="filters">{filters}</div>
 <div class="cards cards--list">{cards or '<p class="muted">No posts yet.</p>'}</div>
 """
-    write("research/index.html", page("research // " + SITE["handle"], "All research writeups.", body, "research", 1))
+    write("research/index.html", page("research // " + SITE["handle"], "All research writeups.", body, "research", 1,
+                                       path="research/index.html"))
 
     for p in posts:
         build_post(p)
@@ -420,7 +495,8 @@ def build_cves():
 </div>
 <div class="cards cards--list">{cards}</div>
 """
-    write("cves.html", page("CVEs // " + SITE["handle"], "Disclosed CVEs and security advisories.", body, "cves"))
+    write("cves.html", page("CVEs // " + SITE["handle"], "Disclosed CVEs and security advisories.", body, "cves",
+                             path="cves.html"))
 
 
 def build_post(p):
@@ -438,9 +514,12 @@ def build_post(p):
   </div>
 </article>
 """
-    write(f"research/{p['slug']}.html",
+    path = f"research/{p['slug']}.html"
+    canonical = SITE["url"].rstrip("/") + "/" + path
+    write(path,
           page(p["title"] + " // " + SITE["handle"], p["summary"] or SITE["description"],
-               body, "research", 1))
+               body, "research", 1, path=path, ogtype="article",
+               jsonld=article_jsonld(p, canonical)))
 
 
 # dot colors for the language indicator (GitHub-ish)
@@ -510,7 +589,8 @@ def build_projects():
 <div class="page-head"><h1># projects</h1><p class="muted">Open-source security tooling &middot; live star &amp; fork counts from GitHub.</p></div>
 <div class="cards" data-gh-user="{esc(SITE.get('github_user', SITE['handle']))}">{cards}</div>
 """
-    write("projects.html", page("projects // " + SITE["handle"], "Open-source security tools and projects.", body, "projects"))
+    write("projects.html", page("projects // " + SITE["handle"], "Open-source security tools and projects.", body, "projects",
+                                 path="projects.html"))
 
 
 def build_about():
@@ -531,7 +611,38 @@ def build_about():
   <p>Reach me at <a href="mailto:{esc(SITE['email'])}">{esc(SITE['email'])}</a>.</p>
 </div>
 """
-    write("about.html", page("about // " + SITE["handle"], "About " + SITE["author"], body, "about"))
+    write("about.html", page("about // " + SITE["handle"], "About " + SITE["author"], body, "about",
+                              path="about.html"))
+
+
+def build_robots():
+    body = f"""User-agent: *
+Allow: /
+
+Sitemap: {SITE['url'].rstrip('/')}/sitemap.xml
+"""
+    write("robots.txt", body)
+
+
+def build_sitemap(posts):
+    base = SITE["url"].rstrip("/")
+    today = datetime.date.today().isoformat()
+    pages = [
+        ("", "1.0", today),
+        ("research/index.html", "0.8", posts[0]["date"] if posts else today),
+        ("cves.html", "0.6", today),
+        ("projects.html", "0.6", today),
+        ("about.html", "0.5", today),
+    ]
+    urls = [f"<url><loc>{base}/{p}</loc><lastmod>{lm}</lastmod><priority>{pr}</priority></url>"
+            for p, pr, lm in pages]
+    for p in posts:
+        urls.append(f"<url><loc>{base}/research/{p['slug']}.html</loc>"
+                     f"<lastmod>{esc(p['date'])}</lastmod><priority>0.9</priority></url>")
+    body = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            + "\n".join(urls) + "\n</urlset>")
+    write("sitemap.xml", body)
 
 
 def build_feed(posts):
@@ -564,6 +675,8 @@ def main():
     shutil.copytree(ASSETS, os.path.join(OUT, "assets"))
     # .nojekyll so GitHub Pages serves files as-is
     open(os.path.join(OUT, ".nojekyll"), "w").close()
+    # browsers request /favicon.ico from the domain root regardless of page depth
+    shutil.copy(os.path.join(OUT, "assets", "favicon.ico"), os.path.join(OUT, "favicon.ico"))
 
     posts = load_posts()
     build_index(posts)
@@ -572,6 +685,8 @@ def main():
     build_projects()
     build_about()
     build_feed(posts)
+    build_robots()
+    build_sitemap(posts)
     print(f"[+] built {len(posts)} posts -> {OUT}")
 
     if "--serve" in sys.argv:

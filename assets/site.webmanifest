@@ -1,0 +1,13 @@
+{
+  "name": "weirdmachine64 // security research",
+  "short_name": "weirdmachine64",
+  "description": "Security research, vulnerability writeups, and responsible disclosure by Mohamed Benchikh.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05070a",
+  "theme_color": "#05070a",
+  "icons": [
+    { "src": "/assets/favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
