@@ -13,6 +13,7 @@ SITE = {
     "google_site_verification": "Uhe-cpELHH2BKTaGaA9xyeLpRJhJESF9YD346fsV_uw",  # Search Console (URL prefix property)
     "socials": [
         {"label": "github",   "url": "https://github.com/weirdmachine64"},
+        {"label": "linkedin", "url": "https://www.linkedin.com/in/mohamedbenchikh/"},
         {"label": "rss",      "url": "/feed.xml"},
     ],
 }

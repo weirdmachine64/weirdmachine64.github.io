@@ -609,7 +609,8 @@ def build_about():
     <li>Reverse engineering</li>
   </ul>
   <h2>contact</h2>
-  <p>Reach me at <a href="mailto:{esc(SITE['email'])}">{esc(SITE['email'])}</a>.</p>
+  <p>Reach me at <a href="mailto:{esc(SITE['email'])}">{esc(SITE['email'])}</a> or on
+     <a href="https://www.linkedin.com/in/mohamedbenchikh/" rel="me noopener">LinkedIn</a>.</p>
 </div>
 """
     write("about.html", page("about // " + SITE["handle"], "About " + SITE["author"], body, "about",
