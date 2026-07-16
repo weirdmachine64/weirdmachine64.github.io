@@ -341,8 +341,7 @@ PAGE = """<!doctype html>
 <meta name="twitter:image" content="{{image}}">
 {{jsonld}}
 <link rel="stylesheet" href="{{up}}assets/style.css">
-<link rel="preconnect" href="https://cdnjs.cloudflare.com">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/black-metal-bathory.min.css">
+<link rel="stylesheet" href="{{up}}assets/vendor/highlightjs/theme.min.css">
 </head>
 <body class="{{bodyclass}}">
 <div class="scanlines" aria-hidden="true"></div>
@@ -357,7 +356,7 @@ PAGE = """<!doctype html>
   <div class="foot__socials">{{socials}}</div>
   <div class="foot__meta">// built static, no trackers &middot; <span id="clock"></span></div>
 </footer>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="{{up}}assets/vendor/highlightjs/highlight.min.js"></script>
 <script src="{{up}}assets/main.js"></script>
 </body>
 </html>"""
